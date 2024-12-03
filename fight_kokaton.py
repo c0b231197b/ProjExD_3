@@ -152,6 +152,29 @@ class Score:
         self.imgscore = self.fonto.render("スコア:" + str(self.score), 0,self.color)
         screen.blit(self.imgscore, self.score_rct)
 
+class Explosion:
+    """
+    爆発に関するクラス
+    """
+    def __init__(self, bomb:"Bomb"):
+        """
+        爆弾の位置に爆発のgifを描画する
+        引数：爆弾のクラス
+        """
+        self.life = 100
+        self.img = pg.image.load(f"fig/explosion.gif")
+        self.img_rct = self.img.get_rect()
+        self.img_rct.center = bomb.rct.center
+    def update(self, screen: pg.Surface):
+        """
+        爆発をlifeの時間分画像を反転させながら描画する
+        引数 screen:画面のSurface
+        """
+        self.life -= 1
+        if self.life > 0:
+            if self.life % 2 == 0:
+                self.img = pg.transform.flip(self.img, -1, -1)
+            screen.blit(self.img, self.img_rct)
 
 
 
@@ -162,6 +185,7 @@ def main():
     bird = Bird((300, 200))
     bomb = Bomb((255, 0, 0), 10)
     beams = []
+    explosions = []
     clock = pg.time.Clock()
     score = Score()
     bombs = [Bomb((255,0,0),10)for _ in range(NUM_OF_BOMBS)]
@@ -193,6 +217,9 @@ def main():
                     if beam.rct.colliderect(bomb.rct):  # ビームが爆弾を撃ち落としたら
                         beams[j] = None
                         bombs[i] = None
+                        #explosionインスタンスの生成
+                        explosion = Explosion(bomb)
+                        explosions.append(explosion)
                         score.score += 1
                         bird.change_img(6, screen)
                         pg.display.update()
@@ -207,8 +234,12 @@ def main():
                 del beams[i]
             else:
                 beam.update(screen)
+            explosions = [explosion for explosion in explosions if explosion.life > 0]
+        for explosion in explosions:
+            explosion.update(screen)
         for bomb in bombs:
             bomb.update(screen)
+        
         pg.display.update()
         tmr += 1
         clock.tick(50)
